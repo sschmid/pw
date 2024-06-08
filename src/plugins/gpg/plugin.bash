@@ -8,7 +8,10 @@ _gpg() {
   fi
 }
 
-pw::init() { mkdir -p "${PW_KEYCHAIN}"; }
+# shellcheck disable=SC2174
+_init() { mkdir -m 700 -p "${PW_KEYCHAIN}"; }
+
+pw::init() { _init; }
 pw::open() { open "${PW_KEYCHAIN}"; }
 pw::lock() { echo "not available for gpg"; }
 pw::unlock() { echo "not available for gpg"; }
@@ -26,6 +29,7 @@ _addOrEdit() {
   local -i edit=$1; shift
   local entry="$1"
   pw::prompt_password "${entry}"
+  _init
   mkdir -p "${PW_KEYCHAIN}/$(dirname "${entry}")"
 
   if ((edit))

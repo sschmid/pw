@@ -12,7 +12,7 @@ _gpg() {
 }
 
 _setup() {
-  mkdir "${TEST_KEYCHAIN}"
+  mkdir -m 700 "${TEST_KEYCHAIN}"
 }
 
 _teardown() {

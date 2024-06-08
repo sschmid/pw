@@ -9,6 +9,10 @@ setup() {
   assert_success
   assert_dir_exists "${TEST_KEYCHAIN}"
 
+  run ls -ld "${TEST_KEYCHAIN}"
+  assert_success
+  assert_output --partial "drwx------"
+
   # check if test key exists and start gpg-agent process
   run _gpg -K
   assert_success
