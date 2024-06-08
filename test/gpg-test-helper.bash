@@ -29,8 +29,16 @@ _add_item_with_name() { _add_item_with_name_and_account "$1" "" "$2"; }
 _add_item_with_account() { _not_implemented; }
 _add_item_with_name_and_account() {
   local item_name="$1" _="$2" item_pw="$3"
-  mkdir -p "${TEST_KEYCHAIN}/$(dirname "${item_name}")"
-  run _gpg --output "${TEST_KEYCHAIN}/${item_name}" --encrypt --default-recipient-self <<< "${item_pw}"
+  local path extension
+  path="$(dirname "${item_name}")"
+  extension="${item_name##*.}"
+  mkdir -p "${TEST_KEYCHAIN}/${path}"
+
+  if [ "${extension}" == "asc" ]
+  then run _gpg --output "${TEST_KEYCHAIN}/${item_name}" --encrypt --armor --default-recipient-self <<< "${item_pw}"
+  else run _gpg --output "${TEST_KEYCHAIN}/${item_name}" --encrypt --default-recipient-self <<< "${item_pw}"
+  fi
+
   assert_success
 }
 
@@ -80,6 +88,18 @@ assert_item_with_account() {
 
 assert_item_with_name_and_account() {
   _not_implemented
+}
+
+assert_binary_with_name() {
+  local item_name="$1"
+  run file -b "${TEST_KEYCHAIN}/${item_name}"
+  assert_output "data"
+}
+
+assert_armor_with_name() {
+  local item_name="$1"
+  run file -b "${TEST_KEYCHAIN}/${item_name}"
+  assert_output --partial "PGP message Public-Key Encrypted Session Key"
 }
 
 assert_no_item_with_name() {

@@ -30,11 +30,17 @@ _addOrEdit() {
   local entry="$1"
   pw::prompt_password "${entry}"
   _init
-  mkdir -p "${PW_KEYCHAIN}/$(dirname "${entry}")"
+  local path
+  path="$(dirname "${entry}")"
+  mkdir -p "${PW_KEYCHAIN}/${path}"
 
-  if ((edit))
-  then _gpg --yes --output "${PW_KEYCHAIN}/${entry}" --encrypt --default-recipient-self <<< "${PW_PASSWORD}"
-  else _gpg --output "${PW_KEYCHAIN}/${entry}" --encrypt --default-recipient-self <<< "${PW_PASSWORD}"
+  if ((edit)); then
+    _gpg --yes --output "${PW_KEYCHAIN}/${entry}" --encrypt --default-recipient-self <<< "${PW_PASSWORD}"
+  else
+    if [ "${entry##*.}" == "asc" ]
+    then _gpg --output "${PW_KEYCHAIN}/${entry}" --encrypt --armor --default-recipient-self <<< "${PW_PASSWORD}"
+    else _gpg --output "${PW_KEYCHAIN}/${entry}" --encrypt --default-recipient-self <<< "${PW_PASSWORD}"
+    fi
   fi
 }
 

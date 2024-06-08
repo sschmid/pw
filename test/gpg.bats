@@ -35,6 +35,18 @@ teardown() {
   assert_fail_add_item_with_name "test-name" "test-pw"
 }
 
+@test "adds item with .gpg extension" {
+  _add_item_with_name "test-name.gpg" "test-pw"
+  assert_item_with_name "test-name.gpg" "test-pw"
+  assert_binary_with_name "test-name.gpg"
+}
+
+@test "adds item with .asc extension" {
+  _add_item_with_name "test-name.asc" "test-pw"
+  assert_item_with_name "test-name.asc" "test-pw"
+  assert_armor_with_name "test-name.asc"
+}
+
 @test "updates item with existing name" {
   _add_item_with_name "test-name" "test-pw"
   _update_item_with_name "test-name" "test-pw-new"
