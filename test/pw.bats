@@ -41,12 +41,27 @@ assert_pw_home() {
 }
 
 @test "resolves pw home and follows multiple symlinks" {
-  mkdir "${BATS_TEST_TMPDIR}/src" "${BATS_TEST_TMPDIR}/bin"
+  mkdir "${BATS_TEST_TMPDIR}"/{src,bin}
   ln -s "${PROJECT_ROOT}/src/pw" "${BATS_TEST_TMPDIR}/src/pw"
   ln -s "${BATS_TEST_TMPDIR}/src/pw" "${BATS_TEST_TMPDIR}/bin/pw"
   # shellcheck disable=SC1090,SC1091
   source "${BATS_TEST_TMPDIR}/bin/pw"
   assert_pw_home
+}
+
+@test "loads pwrc when specified" {
+  _set_pwrc_with_keychains "test-keychain"
+  # shellcheck disable=SC2031
+  echo 'echo "# test pwrc sourced"' >> "${PW_RC}"
+  run pw --help
+  assert_output --partial "# test pwrc sourced"
+}
+
+@test "creates pwrc" {
+  #shellcheck disable=SC2030,SC2031
+  export PW_RC="${BATS_TEST_TMPDIR}/mypwrc.bash"
+  run pw --help
+  assert_file_exists "${PW_RC}"
 }
 
 @test "generates and copies password" {
