@@ -1,4 +1,4 @@
-# tests were copied from keepassxc_cli.bats
+# tests were copied from keepassxc_cli-test-helper.bats
 # gpg can only show entries based on title, not account
 # affected tests were commented out and marked as not implemented
 

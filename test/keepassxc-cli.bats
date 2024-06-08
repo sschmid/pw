@@ -1,13 +1,13 @@
-# tests were copied from keepassxc-plugin.bats
-# gpg can only show entries based on title, not account
+# tests were copied from macos_keychain.bats
+# keepassxc-cli can only show entries based on title, not account
 # affected tests were commented out and marked as not implemented
 
 setup() {
-  load 'gpg-test-helper.bash'
+  load 'pw-test-helper.bash'
+  load 'keepassxc_cli-test-helper.bash'
   _setup
   _set_pwrc_with_keychains "${TEST_KEYCHAIN}"
-  export PW_GPG_PASSWORD="${TEST_PASSWORD}"
-  export GNUPGHOME="${PROJECT_ROOT}/test/fixtures/.gnupg"
+  export PW_KEEPASSXC_PASSWORD="${TEST_PASSWORD}"
 }
 
 teardown() {
@@ -17,7 +17,7 @@ teardown() {
 @test "fails when copying item that doesn't exist" {
   run pw "test-name"
   assert_failure
-  assert_output --partial "gpg: decrypt_message failed: No such file or directory"
+  assert_output "Could not find entry with path test-name."
 }
 
 @test "copies item with name" {
@@ -102,7 +102,7 @@ teardown() {
 @test "fails when printing item that doesn't exist" {
   run pw -p "test-name"
   assert_failure
-  assert_output --partial "gpg: decrypt_message failed: No such file or directory"
+  assert_output "Could not find entry with path test-name."
 }
 
 @test "prints item with name" {
@@ -152,11 +152,10 @@ teardown() {
     # }
 
 @test "fails when wrong password is provided" {
-  PW_GPG_PASSWORD="wrong"
-  _add_item_with_name "test-name" "test-pw"
-  run pw "test-name"
+  PW_KEEPASSXC_PASSWORD="wrong"
+  run pw ls
   assert_failure
-  assert_output --partial "gpg: decryption failed: Bad passphrase"
+  assert_output "Error while reading the database ${TEST_KEYCHAIN}: Invalid credentials were provided, please try again."
 }
 
 @test "lists empty keychain" {
@@ -171,21 +170,7 @@ teardown() {
   run pw ls
   assert_success
   cat << EOF | assert_output -
-./test-name
-./test2-name
+test-name
+test2-name
 EOF
-}
-
-@test "excludes .DS_Store" {
-  touch "${TEST_KEYCHAIN}/.DS_Store"
-  run pw ls
-  assert_success
-  refute_output
-}
-
-@test "adds item in subfolder" {
-  _add_item_with_name "group/test-name" "test-pw"
-  run pw -p "group/test-name"
-  assert_success
-  assert_output "test-pw"
 }

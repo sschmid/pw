@@ -1,6 +1,6 @@
 setup() {
   load 'pw-test-helper.bash'
-  load 'macos_keychain_security-test-helper.bash'
+  load 'macos_keychain-test-helper.bash'
   _setup
   _set_pwrc_with_keychains "${TEST_KEYCHAIN}"
 }

@@ -1,5 +1,5 @@
 setup() {
-  load 'macos_keychain_security-test-helper.bash'
+  load 'macos_keychain-test-helper.bash'
 }
 
 @test "sets up and tears down test database" {

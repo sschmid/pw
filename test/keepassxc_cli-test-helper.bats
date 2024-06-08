@@ -1,4 +1,4 @@
-# tests were copied from macos_keychain_security.bats
+# tests were copied from macos_keychain-test-helper.bats
 # keepassxc-cli can only show entries based on title, not account
 # affected tests were commented out and marked as not implemented
 
