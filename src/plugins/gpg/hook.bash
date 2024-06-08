@@ -1,11 +1,11 @@
-FILE_TYPE="Keepass password database 2.x KDBX"
-FILE_EXTENSION="kdbx"
+# shellcheck disable=SC2034
+FILE_TYPE="PGP"
+FILE_EXTENSION="gpg"
 
 register() {
-  [[ -f "${PW_KEYCHAIN}" ]]
-  [[ "$(file -b "${PW_KEYCHAIN}")" == "${FILE_TYPE}" ]]
+  [[ -d "${PW_KEYCHAIN}" ]]
 }
 
 register_with_extension() {
-  [[ "$1" == "${FILE_EXTENSION}" ]]
+  [[ ! -f "$1" && ! -d "$1" ]]
 }

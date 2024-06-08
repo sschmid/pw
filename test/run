@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 [[ ! -f test/bats/bin/bats ]] && git submodule update --init --recursive
+[[ ! -d test/fixtures/.gnupg ]] && gpg --homedir test/fixtures/.gnupg --batch --pinentry-mode loopback --passphrase pw_test_password --import test/fixtures/pw_test.key
 if (($#)); then
   test/bats/bin/bats "$@"
 else

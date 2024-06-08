@@ -1,33 +1,23 @@
 load 'test_helper/bats-support/load.bash'
 load 'test_helper/bats-assert/load.bash'
 load 'test_helper/bats-file/load.bash'
+load 'pw-test-helper.bash'
 
-: "${PW_KEEPASSXC:="/Applications/KeePassXC.app/Contents/MacOS/keepassxc-cli"}"
-TEST_KEYCHAIN="${BATS_TEST_TMPDIR}/pw_test.kdbx"
+TEST_KEYCHAIN="${BATS_TEST_TMPDIR}/pw_test"
 TEST_PASSWORD="pw_test_password"
 
-_keepassxc-cli() {
-  "${PW_KEEPASSXC}" "$@"
-}
-
-_keepassxc-cli_with_db_password() {
-  _keepassxc-cli "$@" <<< "${TEST_PASSWORD}"
-}
-
-_keepassxc-cli_with_db_password_and_entry_password() {
-  local password="$1"; shift
-  _keepassxc-cli "$@" << EOF
-${TEST_PASSWORD}
-${password}
-EOF
+_gpg() {
+  gpg --quiet --homedir "${PROJECT_ROOT}/test/fixtures/.gnupg" \
+      --batch --pinentry-mode loopback --passphrase "${TEST_PASSWORD}" "$@"
 }
 
 _setup() {
-  _keepassxc-cli_with_db_password_and_entry_password "${TEST_PASSWORD}" db-create -qp "${TEST_KEYCHAIN}"
+  mkdir "${TEST_KEYCHAIN}"
 }
 
 _teardown() {
-  rm -f "${TEST_KEYCHAIN}"
+  rm -rf "${TEST_KEYCHAIN}"
+  killall gpg-agent 2> /dev/null || true
 }
 
 _not_implemented() {
@@ -38,12 +28,10 @@ _not_implemented() {
 _add_item_with_name() { _add_item_with_name_and_account "$1" "" "$2"; }
 _add_item_with_account() { _not_implemented; }
 _add_item_with_name_and_account() {
-  run _pp_add_item_with_name_and_account "$@"
+  local item_name="$1" _="$2" item_pw="$3"
+  mkdir -p "${TEST_KEYCHAIN}/$(dirname "${item_name}")"
+  run _gpg --output "${TEST_KEYCHAIN}/${item_name}" --encrypt --default-recipient-self <<< "${item_pw}"
   assert_success
-}
-_pp_add_item_with_name_and_account() {
-  local item_name="$1" item_account="$2" item_pw="$3"
-  _keepassxc-cli_with_db_password_and_entry_password "${item_pw}" add -qp "${TEST_KEYCHAIN}" -u "${item_account}" "${item_name}"
 }
 
 _update_item_with_name() { _update_item_with_name_and_account "$1" "" "$2"; }
@@ -54,16 +42,13 @@ _update_item_with_name_and_account() {
 }
 _pp_update_item_with_name() {
   local item_name="$1" item_pw="$3"
-  _keepassxc-cli_with_db_password_and_entry_password "${item_pw}" edit -qp "${TEST_KEYCHAIN}" "${item_name}"
+  _gpg --yes --output "${TEST_KEYCHAIN}/${item_name}" --encrypt --default-recipient-self <<< "${item_pw}"
 }
 
 _delete_item_with_name() {
-  run _pp__delete_item_with_name "$@"
-  assert_success
-}
-_pp__delete_item_with_name() {
   local item_name="$1"
-  _keepassxc-cli_with_db_password rm -q "${TEST_KEYCHAIN}" "${item_name}"
+  run rm "${TEST_KEYCHAIN}/${item_name}"
+  assert_success
 }
 
 _delete_item_with_account() {
@@ -77,19 +62,16 @@ _delete_item_with_name_and_account() {
 assert_fail_add_item_with_name() { assert_fail_add_item_with_name_and_account "$1" "" "$2"; }
 assert_fail_add_item_with_account() { _not_implemented; }
 assert_fail_add_item_with_name_and_account() {
-  run _pp_add_item_with_name_and_account "$@"
+  run _add_item_with_name_and_account "$@"
   assert_failure
-  assert_output "Could not create entry with path $1."
+  assert_output --partial "encryption failed: File exists"
 }
 
 assert_item_with_name() {
   local item_name="$1" item_pw="$2"
-  run _pp_assert_item_with_name "${item_name}"
+  run _gpg --decrypt "${TEST_KEYCHAIN}/${item_name}"
   assert_success
   assert_output "${item_pw}"
-}
-_pp_assert_item_with_name() {
-  _keepassxc-cli_with_db_password show -qsa Password "${TEST_KEYCHAIN}" "$1"
 }
 
 assert_item_with_account() {
@@ -102,12 +84,9 @@ assert_item_with_name_and_account() {
 
 assert_no_item_with_name() {
   local item_name="$1"
-  run _pp_assert_no_item_with_name "${item_name}"
+  run _gpg --decrypt "${TEST_KEYCHAIN}/${item_name}"
   assert_failure
-  assert_output "Could not find entry with path ${item_name}."
-}
-_pp_assert_no_item_with_name() {
-  _keepassxc-cli_with_db_password show -qsa Password "${TEST_KEYCHAIN}" "$1"
+  assert_output --partial "gpg: decrypt_message failed: No such file or directory"
 }
 
 assert_no_item_with_account() {
@@ -120,9 +99,5 @@ assert_no_item_with_name_and_account() {
 
 assert_deleted_item_with_name() {
   local item_name="$1"
-  run _pp_assert_deleted_item_with_name "${item_name}"
-  assert_success
-}
-_pp_assert_deleted_item_with_name() {
-  _keepassxc-cli_with_db_password show -qsa Password "${TEST_KEYCHAIN}" "/Recycle Bin/$1"
+  assert_file_not_exists "${TEST_KEYCHAIN}/${item_name}"
 }

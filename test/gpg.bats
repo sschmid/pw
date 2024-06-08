@@ -1,9 +1,9 @@
-# tests were copied from macos_keychain_security.bats
-# keepassxc-cli can only show entries based on title, not account
+# tests were copied from keepassxc_cli.bats
+# gpg can only show entries based on title, not account
 # affected tests were commented out and marked as not implemented
 
 setup() {
-  load 'keepassxc_cli-test-helper.bash'
+  load 'gpg-test-helper.bash'
   _setup
 }
 
@@ -82,6 +82,11 @@ teardown() {
   # assert_item_with_account "test-account" "test-pw"
   # not implemented
   # assert_item_with_name_and_account "test-name" "test-account" "test-pw"
+}
+
+@test "adds item with name in subfolder" {
+  _add_item_with_name_and_account "group/test-name" "test-account" "test-pw"
+  assert_item_with_name "group/test-name" "test-pw"
 }
 
 @test "fails when adding item with existing name and account" {
