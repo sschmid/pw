@@ -2,7 +2,7 @@
 # shellcheck disable=SC1090,SC1091,SC2119
 set -euo pipefail
 
-require_bash() {
+if [[ "$(printf '%s\n' "${BASH_VERSION}" "4.2" | sort -V | head -n 1)" != "4.2" ]]; then
   cat << EOF >&2
 pw requires bash-4.2 or later.
 Installed: ${BASH_VERSION}
@@ -12,11 +12,6 @@ Please install bash:
   brew install bash
 EOF
   exit 1
-}
-
-((BASH_VERSINFO[0] >= 4)) || require_bash
-if ((BASH_VERSINFO[0] == 4)); then
-  ((BASH_VERSINFO[1] >= 2)) || require_bash
 fi
 
 if ! command -v fzf > /dev/null; then

@@ -3,11 +3,7 @@ setup() {
 }
 
 assert_require_bash() {
-  local version_info=("$1" "$2" "$3")
-  ((version_info[0] >= 4)) || exit 1
-  if ((version_info[0] == 4)); then
-    ((version_info[1] >= 2)) || exit 1
-  fi
+  [[ "$(printf '%s\n' "$1" 4.2 | sort -V | head -n 1)" == "4.2" ]]
 }
 
 assert_pw_home() {
@@ -15,19 +11,19 @@ assert_pw_home() {
 }
 
 @test "requires bash-4.2 or later" {
-  run assert_require_bash 5 0 0
+  run assert_require_bash 5.0.0
   assert_success
 
-  run assert_require_bash 4 4 0
+  run assert_require_bash 4.4.0
   assert_success
 
-  run assert_require_bash 4 2 0
+  run assert_require_bash 4.2.0
   assert_success
 
-  run assert_require_bash 4 1 0
+  run assert_require_bash 4.1.0
   assert_failure
 
-  run assert_require_bash 3 2 0
+  run assert_require_bash 3.2.0
   assert_failure
 }
 
